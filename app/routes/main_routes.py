@@ -79,7 +79,7 @@ def old_generate_recommendations(generator_name, user_id):
 
 
 @bp.route('/config/<int:opap_id>', methods=['POST'])
-def set_config(opap_id):
+def get_config(opap_id):
     data = request.get_json()
     if not data:
         return jsonify({"error": "No JSON data provided"}), 400
@@ -103,4 +103,10 @@ def set_config(opap_id):
     opap = Opap.query.get(opap_id)
     if not opap:
         return jsonify({"error": "Opap not found"}), 404
-    return opap.config_schema, 200
+
+    schema = opap.config_schema
+
+    if schema:
+        return opap.config_schema, 200
+    else:
+        return jsonify({"error": "Configuration schema not found"}), 404
