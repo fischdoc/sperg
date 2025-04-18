@@ -11,8 +11,16 @@ def execute_recommendation(code_str: str, allowed_globals: dict) -> FunctionType
     if compiled_result.errors:
         raise ValueError(f"Compilation error: {compiled_result.errors}")
 
+    SAFE_BUILTINS = {
+        "len": len,
+        "range": range,
+        "min": min,
+        "max": max,
+        # expose more if needed
+    }
+
     global_env = {
-        "__builtins__": {},
+        "__builtins__": SAFE_BUILTINS,
         "_getiter_": default_guarded_getiter,
         "_getitem_": default_guarded_getitem,
         **allowed_globals

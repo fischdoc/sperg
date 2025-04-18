@@ -5,7 +5,6 @@ from app.models.coupon import Coupon
 from app.models.game import Game
 from app.models.user import User
 from app.models.opap import Opap
-from app.services.rec_generator import RecGenerator
 from app.services.rec_registry import rec_registry
 from app.services.sandbox import execute_recommendation
 from app.services.rec_registry import register_rec
@@ -26,6 +25,7 @@ def handle_request(path):
 @bp.route('/echo', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def echo():
     data = request.get_json()
+    print(rec_registry)
     if not data:
         return jsonify({"error": "No JSON data provided"}), 400
     return jsonify(data), 200
@@ -33,8 +33,12 @@ def echo():
 
 @bp.route('/recommendation/<int:user_id>', methods=['GET'])
 def generate_recommendations(user_id):
+    # this is very efficient
     games = Game.query.all()
     users = User.query.all()
+    coupons = Coupon.query.all()
+    opaps = Opap.query.all()
+
     user = User.query.get(user_id)
     opap = Opap.query.get(user.opap_id)
 
@@ -45,16 +49,15 @@ def generate_recommendations(user_id):
         return jsonify({"error": "No recommendation schema found"}), 404
 
     # prepare before getting method from registry
-    generator = opap.config_schema.get("generator")  # this is either a default generator's name, or custom code
-    schema = opap.config_schema.get("schema")
-    rec_gen = RecGenerator(games, users)
+    generator = opap.preferred_generator  # a name to look up in the registry
+    schema = opap.config_schema
 
     # get method from registry and generate recommendations
     method = rec_registry.get(generator)  # cannot run this directly
     if not method:
+        print(rec_registry)
         method = rec_registry.get("random_recs")    # default behaviour is to get random recs. can be changed.
-    rec_method = getattr(rec_gen, method.__name__)  # get the requested method (name)
-    recommended_games = rec_method(user_id)
+    recommended_games = method(games, users, coupons, opaps)
 
     """
     # TODO: you may replace the above with this:
@@ -132,13 +135,14 @@ def buy_coupon(coupon_id, user_id):
     # not checking for money or anything. let the fictional frontend devs handle this
     return jsonify({"message": "Coupon sale successful"}), 200
 
+
 @bp.route('/recommendation/<string:generator_name>/<int:user_id>', methods=['GET'])
 def old_generate_recommendations(generator_name, user_id):
     # Ffetch all for optimal performance
     games = Game.query.all()
     users = User.query.all()
 
-    rec_gen = RecGenerator(games, users)
+    #rec_gen = RecGenerator(games, users)
 
     # best most scalable way to pick generators
     if generator_name == 'random_recs':
@@ -165,27 +169,20 @@ def set_config(opap_id):
         # generator and schema must be defined. anything else is optional. prob ignored.
         return jsonify({"error": "Missing required fields: 'generator' and 'schema'"}), 400
 
-    # store method in registry if needed
-    generator_code = data["generator"]
-    print("DEBUG: generator_code =", generator_code)
-    print("DEBUG: type =", type(generator_code))
-    schema = data["schema"]
+    # get the code from the generator list
+    if "code" in data:
+        if opap.generator_codes is None:
+            opap.generator_codes = []
+        if "overwrite" in data and data["overwrite"] == 1:
+            opap.generator_codes = [data["code"]]
+        else:
+            opap.generator_codes.append(data["code"])
 
-    # if generator is a function string, attempt to compile and register it
-    if isinstance(generator_code, str) and generator_code.strip().startswith("def"):
-        try:
-            func = execute_recommendation(generator_code, allowed_globals={
-                "len": len,
-                "str": str,
-                "int": int,
-            })
-            strategy_name = f"custom_opap_{opap_id}"
-            register_rec(strategy_name, func)
-        except Exception as e:
-            return jsonify({"error": f"Failed to register custom generator: {str(e)}"}), 400
+    print(opap.generator_codes)
 
     # store data after all is done
-    opap.config_schema = data  # store schema in opap entry
+    opap.config_schema = data["schema"]  # store schema in opap entry
+    opap.preferred_generator = data["generator"]
     db.session.commit()
 
     return jsonify({"message": "Configuration updated successfully"}), 200
@@ -203,3 +200,10 @@ def get_config(opap_id):
         return opap.config_schema, 200
     else:
         return jsonify({"error": "Configuration schema not found"}), 404
+
+
+@bp.route('/cleanup', methods=['GET'])
+def debug_cleanup():
+    db.session.query(Coupon).delete()
+    db.session.commit()
+    return jsonify({"message": "Database cleanup successful"}), 200

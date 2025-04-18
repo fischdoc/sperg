@@ -33,6 +33,7 @@ def create_app(config_name='default'):
 
     with app.app_context():
         # update this ose ke me pas problem
+        db.drop_all()
         from .models.user import User
         from .models.game import Game
         from .models.bet import Bet
@@ -42,5 +43,12 @@ def create_app(config_name='default'):
 
         from .routes import main_routes
         app.register_blueprint(main_routes.bp)
+
+        # do the registry thing im losing it
+        from .services.rec_generator import random_recs
+        from .services.rec_generator import all_games_recs
+        from .services.rec_registry import register_rec
+        register_rec("random_recs", random_recs)
+        register_rec("all_games_recs", all_games_recs)
 
     return app
