@@ -37,6 +37,7 @@ def create_app(config_name='default'):
         from .models.game import Game
         from .models.bet import Bet
         from .models.opap import Opap
+        from .models.coupon import Coupon
         db.create_all()
 
         from .routes import main_routes
