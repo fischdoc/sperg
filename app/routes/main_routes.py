@@ -59,29 +59,6 @@ def generate_recommendations(user_id):
         method = rec_registry.get("random_recs")    # default behaviour is to get random recs. can be changed.
     recommended_games = method(games, users, coupons, opaps)
 
-    """
-    # TODO: you may replace the above with this:
-    method = rec_registry.get(generator)
-
-    # fallback to default if the given one is not registered
-    if not method:
-        method = rec_registry.get("random_recs")
-    
-    # decide whether it's a class method or a standalone function
-    if hasattr(method, "__self__"):  # it's a bound method of RecGenerator
-        recommended_games = method(user_id)
-    else:  # standalone function, call directly
-        recommended_games = method(user_id, games, users)
-    
-    >>> original:
-    # get method from registry and generate recommendations
-    method = rec_registry.get(generator)  # cannot run this directly
-    if not method:
-        method = rec_registry.get("random_recs")    # default behaviour is to get random recs. can be changed.
-    rec_method = getattr(rec_gen, method.__name__)  # get the requested method (name)
-    recommended_games = rec_method(user_id)
-    """
-
     # format recommendations according to schema
     recommendations = []
     for game in recommended_games:
@@ -145,14 +122,14 @@ def old_generate_recommendations(generator_name, user_id):
     #rec_gen = RecGenerator(games, users)
 
     # best most scalable way to pick generators
-    if generator_name == 'random_recs':
-        recommendations = rec_gen.random_recs(user_id)
-    elif generator_name == 'all_games_recs':
-        recommendations = rec_gen.all_games_recs(user_id)
-    else:
-        return jsonify({"error": "Invalid generator name"}), 400
-
-    return jsonify({"user_id": user_id, "recommendations": recommendations})
+    # if generator_name == 'random_recs':
+    #     recommendations = rec_gen.random_recs(user_id)
+    # elif generator_name == 'all_games_recs':
+    #     recommendations = rec_gen.all_games_recs(user_id)
+    # else:
+    #     return jsonify({"error": "Invalid generator name"}), 400
+    #
+    # return jsonify({"user_id": user_id, "recommendations": recommendations})
 
 
 @bp.route('/config/<int:opap_id>', methods=['POST'])
@@ -178,7 +155,9 @@ def set_config(opap_id):
         else:
             opap.generator_codes.append(data["code"])
 
-    print(opap.generator_codes)
+        # now add that to the registry
+        function = execute_recommendation(data["code"], allowed_globals={}, function_name=data["generator"])
+        register_rec(data["generator"], function)
 
     # store data after all is done
     opap.config_schema = data["schema"]  # store schema in opap entry
@@ -204,6 +183,8 @@ def get_config(opap_id):
 
 @bp.route('/cleanup', methods=['GET'])
 def debug_cleanup():
+    # for my own convenience
+    # TODO: make this automatic and based on expiration dates or sth
     db.session.query(Coupon).delete()
     db.session.commit()
     return jsonify({"message": "Database cleanup successful"}), 200

@@ -4,7 +4,7 @@ from RestrictedPython.Eval import default_guarded_getiter, default_guarded_getit
 from types import FunctionType
 
 
-def execute_recommendation(code_str: str, allowed_globals: dict) -> FunctionType:
+def execute_recommendation(code_str: str, allowed_globals: dict, function_name: str) -> FunctionType:
     compiled_result = compile_restricted_exec(code_str)
     byte_code = compiled_result.code
 
@@ -30,7 +30,13 @@ def execute_recommendation(code_str: str, allowed_globals: dict) -> FunctionType
 
     exec(byte_code, global_env, local_env)
 
-    if "recommend" not in local_env:
-        raise ValueError("No function named 'recommend' found in submitted code")
+    # function name must match generator field
+    if function_name not in local_env:
+        raise ValueError(f"No function named '{function_name}' found in the submitted code")
 
-    return local_env["recommend"]
+    # get func and ensure its callable
+    function = local_env[function_name]
+    if not callable(function):
+        raise ValueError(f"'{function_name}' is not a callable function")
+
+    return function
