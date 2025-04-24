@@ -25,7 +25,6 @@ def handle_request(path):
 @bp.route('/echo', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def echo():
     data = request.get_json()
-    print(rec_registry)
     if not data:
         return jsonify({"error": "No JSON data provided"}), 400
     return jsonify(data), 200
