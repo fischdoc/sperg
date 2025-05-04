@@ -33,12 +33,12 @@ def create_app(config_name='default'):
 
     with app.app_context():
         # update this ose ke me pas problem
-        db.drop_all()
         from .models.user import User
         from .models.game import Game
         from .models.bet import Bet
         from .models.opap import Opap
         from .models.coupon import Coupon
+        #db.drop_all()
         db.create_all()
 
         from .routes import main_routes

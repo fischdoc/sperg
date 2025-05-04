@@ -14,3 +14,5 @@ Config Schema Fields:
         > i chose those because i dont know what else might be useful
 ["overwrite"]
     > 0 or 1, depending on if the code field should overwrite the client's list of functions
+
+\--> old description do not read

@@ -23,6 +23,13 @@ def random_recs(games, users, coupons, opaps):
     # just pick sth random for now
     games = Game.query.all()
     user_recs = [game for game in games if random.choice([True, False])]
+
+    # this is bad. do not do this
+    if not user_recs:
+        if not games[0]:
+            return []
+        return [games[0]]
+
     return user_recs
 
 

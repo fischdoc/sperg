@@ -10,3 +10,22 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  rqworker:
+    build:
+      context: .
+      dockerfile: worker.Dockerfile
+    volumes:
+      - ./instance:/app/instance
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis

@@ -14,7 +14,7 @@ app.app_context().push()
 def populate_database():
     db.session.add_all([
         Opap(location="GREECE", name="OPAP Drosopoulou", currency="EUR"),
-        Opap(location="SERBIA", name="Nostrabet", currency="RSD")
+        Opap(location="SERBIA", name="Nostrabet", currency="RSD", preferred_generator="random_recs"),
     ])
 
     db.session.add_all([
