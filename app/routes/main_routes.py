@@ -15,7 +15,7 @@ from redis import Redis
 
 bp = Blueprint('main', __name__)
 
-# redis connection and rq stuff
+# redis connection and rq stuff # sduhen?
 redis_url = "redis://redis:6379"
 redis_conn = Redis.from_url(redis_url)
 queue = Queue(connection=redis_conn)
@@ -127,7 +127,31 @@ def get_config(opap_id):
         return jsonify({"error": "Configuration schema not found"}), 404
 
 
-######### BROKER STUFF #########
+######### DEBUG & TESTING #########
+@bp.route('/cleanup', methods=['GET'])
+def debug_cleanup():
+    # for my own convenience
+    # TODO: make this automatic and based on expiration dates or sth
+    db.session.query(Coupon).delete()
+    db.session.commit()
+    return jsonify({"message": "Database cleanup successful"}), 200
+
+
+@bp.route('/echo', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+def echo():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON data provided"}), 400
+    return jsonify(data), 200
+
+
+@bp.route('/healthcheck', methods=['GET'])
+def healthcheck():
+    # TODO: expand?
+    return {"status": "ok"}, 200
+
+
+######### MARKED FOR REMOVAL #########
 @bp.route('/add_coupon', methods=['POST'])
 def create_coupon():
     try:
@@ -139,6 +163,8 @@ def create_coupon():
 
         # NQ~ job
         job = queue.enqueue(add_coupon, selections, user_id)
+
+        # TODO: sanitise input somewhere in here
 
         return jsonify({
             'message': 'Coupon creation job enqueued',
@@ -158,52 +184,3 @@ def enqueue():
 
     # use workers to do a job, but no return of results
     return jsonify({"job_id": job.id}), 202
-
-
-######### DEBUG & TESTING #########
-@bp.route('/cleanup', methods=['GET'])
-def debug_cleanup():
-    # for my own convenience
-    # TODO: make this automatic and based on expiration dates or sth
-    db.session.query(Coupon).delete()
-    db.session.commit()
-    return jsonify({"message": "Database cleanup successful"}), 200
-
-
-@bp.route('/echo', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
-def echo():
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No JSON data provided"}), 400
-    return jsonify(data), 200
-
-
-######### MARKED FOR REMOVAL #########
-@bp.route('/<int:user_id>/buy/<int:coupon_id>', methods=['GET'])
-def buy_coupon(coupon_id, user_id):
-    """use broker instead of this"""
-    # here you could add sth about payment details. in the POST body
-    # ideally this would be a POST request but i dont like opening postman every 2 seconds
-    coupon = Coupon.query.get(coupon_id)
-    user = User.query.get(user_id)
-
-    # error handling. good target for tests ig
-    if not coupon:
-        return jsonify({"error": "Coupon not found"}), 404
-    if coupon.user is not None:
-        return jsonify({"error": "Coupon already sold"}), 400
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    coupon.sale_timestamp = datetime.now(timezone.utc)
-    coupon.user = user
-
-    # attempt to save to data store (db for now)
-    db.session.add(coupon)
-    db.session.commit()
-
-    # not checking for money or anything. let the fictional frontend devs handle this
-    return jsonify({"message": "Coupon sale successful"}), 200
-
-
-# TODO: endpoint for healthcheck?

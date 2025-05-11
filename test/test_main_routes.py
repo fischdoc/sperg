@@ -21,7 +21,15 @@ class MainRoutesTestCase(unittest.TestCase):
             # copy dummy data
             self.opap = Opap(location="SERBIA", name="Nostrabet", currency="RSD", config_schema={
                 "generator": "random_recs",
-                "schema": ["game_id", "team_home", "team_away"]
+                "schema": {
+                    "game_id": "integer",
+                    "team_home": "string",
+                    "team_away": "string",
+                    "score_home": "integer",
+                    "score_away": "integer",
+                    "start": "datetime",
+                    "location": "string"
+                }
             })
             self.user = User(opap_id=1, name="xrhstos xrhsths", birth_date=datetime(1997, 5, 15), reg_date=datetime(2020, 1, 10))
             self.game = Game(team_home="Team A", team_away="Team B", score_home=2, score_away=1, start=datetime(2020, 10, 1, 14, 0), end=datetime(2023, 10, 1, 16, 0), location="CROATIA")
@@ -50,14 +58,18 @@ class MainRoutesTestCase(unittest.TestCase):
         self.assertEqual(response.json, {"error": "User not found"})
 
     def test_generate_recommendations_success(self):
+        ######### spunoka. kot jam tu lodh. #########
+        _ = self.user_id  # force evaluation
         response = self.client.get(f'/recommendation/{self.user_id}')
         self.assertEqual(response.status_code, 200)
         recommendations = response.json.get("recommendations")
+        print(recommendations)  # ??? printing self.user_id makes the test pass?? how??
         self.assertIsInstance(recommendations, list)
         if recommendations:
-            self.assertIn("game_id", recommendations[0])
-            self.assertIn("team_home", recommendations[0])
-            self.assertIn("team_away", recommendations[0])
+            recommendation = recommendations[0]
+            self.assertIn("game_id", recommendation)
+            self.assertIn("team_home", recommendation)
+            self.assertIn("team_away", recommendation)
 
 
 # just for the config endpoint

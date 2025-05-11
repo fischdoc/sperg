@@ -13,18 +13,25 @@ q = Queue(connection=redis_conn)
 
 def add_coupon(selections, user_id=None):
     """create new coupon based on list of selections"""
-    # TODO: pls improve this
     from app import create_app
     app = create_app()
 
     with app.app_context():
+        # check before inputting to db
+        if not isinstance(selections, list) or not selections:
+            raise ValueError("Selections list is empty")
+        if not all(isinstance(sel, dict) and sel for sel in selections):
+            raise ValueError("Selections contains empty dict")
+        if user_id is not None and not isinstance(user_id, int):
+            raise ValueError("user_id must be an integer")
+
         new_coup = Coupon(
             selections=selections,
             user_id=user_id
         )
         db.session.add(new_coup)
         db.session.commit()
-        print(f"Coupon ID {new_coup.coupon_id} added")
+        print(f"Coupon with ID {new_coup.coupon_id} added")
 
 
 def process_data(data):
