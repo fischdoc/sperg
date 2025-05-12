@@ -1,61 +1,44 @@
-# Flast Starter App
+# SPErg
 
-###### This is a basic example that shows how to setup a flask application
+SPErg is a basic Flask based web application developed as part of a Systems Programming course for the Summer Semester 2025. It is not recommended to use this code anywhere.
 
-Here's the basic directory structure;
-```
-├── app
-│   ├── config.py
-│   ├── __init__.py
-│   ├── models
-│   │   └── __init__.py
-│   ├── resources
-│   │   └── __init__.py
-│   ├── templates
-│   │   └── index.html
-│   ├── utils
-│   │   └── __init__.py
-│   └── views
-│       └── __init__.py
-├── README.md
-├── requirements.txt
-├── test
-│   └── __init__.py
-└── wsgi.py
+## Overview
 
-```
+The application is designed to serve betting recommendations to clients. It features:
 
-**models** - This holds all your data classes and utility functions that interact with any kind of persitence 
-(Mongo, Mysql etc) 
+- A Flask backend to handle routing and responses.
+- Integration with Redis to allow clients to upload specific data directly to the database.
+- Modular structure for ease of testing and bc its one of the requirements.
 
-**resources** - This package usually holds endpoints related to an API. Try to avoid putting view endpoints here. Put them
-in the `view` package instead
+## Technologies Used
 
-**view** - This package holds any endpoint that deals with any visual representation i.e endpoints that return html
+- **Python**
+- **Flask**
+- **Redis**
+- **Docker** (optional, for containerised development/deployment)
 
-**templates** - Put all your `.html` files here
+## Getting Started
 
-**utils** - Put utility functions here. Mostly reusable logic used in the `view` and `resources`
+### Prerequisites
 
-**config.py** - All app your configuration goes here. Remember to put the right config in the right class. Anything 
-reusable should go in `Config`
+Ensure you have the following installed:
 
+- Python
+- pip
+- Redis
+- Docker
+- idk follow the errors
 
-This is not a strict **life or death** way of structuring a flask app. Remember programming is art. As long as your app 
-can be testable go with whatever makes you sleep at night :relieved:
+### Installation
 
-**Tips (Frequent updates expected):**
-1. For any file in the `models` package. Make sure it's within a class or method/function. It makes it easy to mock stuff
-during testing
-2. While organizing your models be careful while using the `orgranize imports` feature available in text editors and IDEs
-it can affect how your models are loaded(i.e relationships) thus prevent your app from starting.
-3. While testing your endpoints start with **negative vibes first**. Basically, start testing for non 200/201 responses first
-4. Any method/function/class in the `utils` package should not depend on anything outside the utils package (Scope of your code. They can depend on libraries).
-5. Make use of Flask extensions. They save a lot of time! [Here](http://flask.pocoo.org/extensions/) is a good place to start.
-should be passed in as parameters. It helps prevent cyclic dependencies
+Figure it out
 
-**Further References:**
+## Future Plans
 
-- [Flask Project Layout](http://flask.pocoo.org/docs/1.0/tutorial/layout/)
-- [Organizing your project](http://exploreflask.com/en/latest/organizing.html)
-- [Structure of a flask project](https://lepture.com/en/2018/structure-of-a-flask-project)
+- finish the project
+- clean up the code
+- write a better README
+
+## License
+
+This project is not licensed. You may steal at will.

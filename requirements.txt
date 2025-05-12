@@ -2,7 +2,7 @@ Flask~=3.1.0
 Flask-SQLAlchemy
 RestrictedPython~=8.0
 sqlalchemy~=2.0.40
-celery~=5.5.2
+#celery~=5.5.2 # im not using this anymore
 redis
 rq
 # add any other dependencies as needed
