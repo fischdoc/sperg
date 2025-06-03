@@ -62,14 +62,14 @@ After all the above is done, you can run the following tests.
 
 2. Endpoints
 
-   > __GET__ /recommendation/\<int:user_id\>/\<int:score_home\>/\<int:score_away\>
-   - Gets recommendations for a certain user. Generates a coupon, but it doesn't count as bought yet. Coupon sales are handled by clients.
+   - __GET__ /recommendation/\<int:user_id\>/\<int:score_home\>/\<int:score_away\>
+   > Gets recommendations for a certain user. Generates a coupon, but it doesn't count as bought yet. Coupon sales are handled by clients.
    
-   > __POST__ /config/\<int:opap_id\>
-   - Send a config schema, flags, custom code, etc.
+   - __POST__ /config/\<int:opap_id\>
+   > Send a config schema, flags, custom code, etc.
 
-   > __GET__ /config/\<int:opap_id\>
-   - Get config json
+   - __GET__ /config/\<int:opap_id\>
+   > Get config json
 
 
 ## License
