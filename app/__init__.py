@@ -35,7 +35,6 @@ def create_app(config_name='default'):
         # update this ose ke me pas problem
         from .models.user import User
         from .models.game import Game
-        from .models.bet import Bet
         from .models.opap import Opap
         from .models.coupon import Coupon
         #db.drop_all()
