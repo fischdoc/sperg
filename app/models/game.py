@@ -15,3 +15,30 @@ class Game(db.Model):
 
     def __repr__(self):
         return f'<Game {self.team_home} vs {self.team_away}>'
+
+    # do this or the tests wont pass
+    def __eq__(self, other):
+        if not isinstance(other, Game):
+            return False
+        return (
+            self.game_id == other.game_id and
+            self.start == other.start and
+            self.end == other.end and
+            self.location == other.location and
+            self.team_home == other.team_home and
+            self.team_away == other.team_away and
+            self.score_home == other.score_home and
+            self.score_away == other.score_away
+        )
+
+    def __hash__(self):
+        return hash((
+            self.game_id,
+            self.start,
+            self.end,
+            self.location,
+            self.team_home,
+            self.team_away,
+            self.score_home,
+            self.score_away
+        ))

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.coupon import Coupon
@@ -8,35 +8,28 @@ from app.models.opap import Opap
 from app.services.rec_registry import rec_registry
 from app.services.sandbox import execute_recommendation
 from app.services.rec_registry import register_rec
-from app.tasks.jobs import q, process_data, add_coupon
-from rq import Queue
-from redis import Redis
 
 
 bp = Blueprint('main', __name__)
 
-# redis connection and rq stuff # sduhen?
-redis_url = "redis://redis:6379"
-redis_conn = Redis.from_url(redis_url)
-queue = Queue(connection=redis_conn)
-
 
 ######### ACTUAL ENDPOINTS #########
-@bp.route('/recommendation/<int:user_id>', methods=['GET'])
-def generate_recommendations(user_id):
+@bp.route('/recommendation/<int:user_id>/<int:score_home>/<int:score_away>', methods=['GET'])
+def generate_recommendations(user_id, score_home, score_away):
     # this is very efficient
     games = Game.query.all()
     users = User.query.all()
     coupons = Coupon.query.all()
     opaps = Opap.query.all()
 
+    # get data and handle potential absence thereof
     user = User.query.get(user_id)
-    opap = Opap.query.get(user.opap_id)
-
-    # handle potential absence of data
     if not user:
-        return jsonify({"error": "User not found"}), 404
-    if not opap or not opap.config_schema:
+        return jsonify({'error': 'User not found'}), 404
+    opap = Opap.query.get(user.opap_id)
+    if not opap:
+        return jsonify({'error': 'Opap not found'}), 404
+    if not opap.config_schema:
         return jsonify({"error": "No recommendation schema found"}), 404
 
     # prepare before getting method from registry
@@ -46,9 +39,10 @@ def generate_recommendations(user_id):
     # get method from registry and generate recommendations
     method = rec_registry.get(generator)  # cannot run this directly
     if not method:
-        print(rec_registry)
+        # print(rec_registry)
         method = rec_registry.get("random_recs")    # default behaviour is to get random recs. can be changed.
-    recommended_games = method(games, users, coupons, opaps)
+    recommended_games = method(user_id, games, users, coupons, opaps)
+    # print(recommended_games)
 
     # format recommendations according to schema
     recommendations = []
@@ -71,6 +65,9 @@ def generate_recommendations(user_id):
     # TODO: this clogs up the database. coupons must be deleted periodically. they must have an expiration date.
     coupon = Coupon()
     coupon.selections = serialise_datetimes(recommendations)  # straight up json idc. client figures this out on their own.
+    coupon.pred_home_score = score_home
+    coupon.pred_away_score = score_away
+
     db.session.add(coupon)
     db.session.commit()
 
@@ -131,7 +128,6 @@ def get_config(opap_id):
 @bp.route('/cleanup', methods=['GET'])
 def debug_cleanup():
     # for my own convenience
-    # TODO: make this automatic and based on expiration dates or sth
     db.session.query(Coupon).delete()
     db.session.commit()
     return jsonify({"message": "Database cleanup successful"}), 200
@@ -143,44 +139,3 @@ def echo():
     if not data:
         return jsonify({"error": "No JSON data provided"}), 400
     return jsonify(data), 200
-
-
-@bp.route('/healthcheck', methods=['GET'])
-def healthcheck():
-    # TODO: expand?
-    return {"status": "ok"}, 200
-
-
-######### MARKED FOR REMOVAL #########
-@bp.route('/add_coupon', methods=['POST'])
-def create_coupon():
-    try:
-        data = request.get_json()
-
-        # extract data (expect formatted)
-        selections = data['selections']
-        user_id = data.get('user_id', None)
-
-        # NQ~ job
-        job = queue.enqueue(add_coupon, selections, user_id)
-
-        # TODO: sanitise input somewhere in here
-
-        return jsonify({
-            'message': 'Coupon creation job enqueued',
-            'job_id': job.id
-        }), 202
-
-    except Exception as e:
-        return jsonify({'erorr': str(e)}), 400
-
-
-@bp.route('/enqueue', methods=['POST'])
-def enqueue():
-    # test endpoint for the test job. not actually needed for anything
-    data = request.get_json()
-    job = q.enqueue(process_data, data)
-    print(f"Enqueuing job to queue: {q.name}")
-
-    # use workers to do a job, but no return of results
-    return jsonify({"job_id": job.id}), 202

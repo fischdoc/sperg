@@ -22,7 +22,7 @@ def create_app(config_name='default'):
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Ensure the instance folder exists
+    # ensure the instance folder exists
     try:
         os.makedirs(app.instance_path)
     except OSError:
@@ -44,7 +44,7 @@ def create_app(config_name='default'):
         from .routes import main_routes
         app.register_blueprint(main_routes.bp)
 
-        # do the registry thing im losing it
+        # do the registry thing here zot na ruj
         from .services.rec_generator import random_recs
         from .services.rec_generator import all_games_recs
         from .services.rec_registry import register_rec

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build: .
@@ -29,3 +27,4 @@ services:
       - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
+    command: rq worker --with-scheduler
